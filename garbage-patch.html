@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Garbage Patch</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef1f6;--surface:#fff;--text:#1b2233;--muted:#5d677d;--line:#d3d9e6;--accent:#2f4bd8;--accent-text:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#151a2b;--surface:#1f2640;--text:#eaeefb;--muted:#9aa5c4;--line:#323c5f;--accent:#7b93ff;--accent-text:#10162a}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#151a2b;--surface:#1f2640;--text:#eaeefb;--muted:#9aa5c4;--line:#323c5f;--accent:#7b93ff;--accent-text:#10162a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Bricolage Grotesque",system-ui,sans-serif;line-height:1.5}
+main{max-width:760px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:2.2rem;font-weight:800;margin:0 0 4px;letter-spacing:-.02em}
+p.sub{margin:0 0 24px;color:var(--muted)}
+section,.rank{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+.rank{border-left-width:6px}
+h2{font-size:1.05rem;margin:0 0 12px}
+.head{display:grid;grid-template-columns:1fr 90px 90px;gap:10px;align-items:center;margin-bottom:8px}
+.sr{display:grid;grid-template-columns:1fr 80px 100px 34px;gap:8px;align-items:center;padding:4px 0 4px 14px}
+input[type=text],input[type=number]{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--text);font:inherit}
+input.rn{font-weight:800;font-size:1.05rem}
+.muted{color:var(--muted);font-size:.9rem}
+.bar{display:flex;height:14px;border-radius:7px;overflow:hidden;margin:12px 0 6px}
+.bar span{display:block;height:100%}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+button{font:inherit;font-weight:600;padding:10px 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-text);cursor:pointer}
+button.alt{background:transparent;color:var(--accent)}
+button.sm{padding:4px 10px;font-size:.9rem}
+button.x{padding:2px 0;width:30px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.coins{margin-left:auto;font-weight:600}
+.results{display:flex;flex-wrap:wrap;gap:8px;min-height:44px}
+.chip{padding:6px 12px;border-radius:8px;font-weight:600;color:#fff;font-size:.95rem;animation:pop .25s ease-out}
+@keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.chip{animation:none}}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.95rem}
+th,td{text-align:left;padding:5px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+tr.rk td{font-weight:600}
+td.in{padding-left:22px}
+#gate{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;padding-top:calc(24px + env(safe-area-inset-top,0px))}
+.gbox{max-width:420px;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:24px}
+#modal{position:fixed;inset:0;z-index:90;background:rgba(10,14,30,.6);display:none;align-items:center;justify-content:center;padding:24px}
+.mbox{background:var(--surface);border:1px solid var(--line);border-top:8px solid var(--mc,#888);border-radius:12px;padding:24px;max-width:380px;width:100%;text-align:center}
+.mdesc{white-space:pre-line;color:var(--muted);margin:-8px 0 18px;font-size:.95rem;overflow-wrap:anywhere}
+.nw{position:relative}.nw input{padding-right:28px}
+.dbtn{position:absolute;right:3px;top:50%;transform:translateY(-50%);width:22px;height:22px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--muted);font-size:.95rem;line-height:1;opacity:0;cursor:pointer}
+.sr:hover .dbtn,.sr:focus-within .dbtn,.dbtn.has{opacity:.7}
+.dbtn:hover{opacity:1;background:var(--line)}
+.dr{padding:0 0 6px 14px}.dr textarea{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--text);font:inherit;font-size:.9rem;resize:vertical}
+.mname{font-size:1.6rem;font-weight:800;margin:4px 0 18px;overflow-wrap:anywhere}
+#results{flex-direction:column;align-items:flex-start}
+#inv{flex-direction:column;align-items:flex-start}
+.dull .chip,.dull .num{filter:saturate(.3);opacity:.7}
+.acts{display:none;gap:4px;flex-wrap:wrap;margin-left:6px}
+.orow:hover .acts,.orow:focus-within .acts{display:inline-flex}
+.acts button{padding:2px 8px;font-size:.8rem}
+.orow{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.num{display:inline-block;min-width:24px;padding:1px 8px;border-radius:999px;color:#fff;font-weight:600;font-size:.85rem;text-align:center}
+</style>
+</head>
+<body>
+<div id="gate" role="dialog" aria-modal="true" aria-label="Choose how to open this page"><div class="gbox"><h1>Garbage Patch</h1><p class="sub">Choose how to open this page.</p>
+<div class="actions"><button id="gEdit">Edit with passcode</button><button class="alt" id="gView">View only</button></div>
+<div id="gpw" style="display:none;margin-top:14px" class="actions"><input type="password" id="pwin" aria-label="Passcode" placeholder="Passcode" style="max-width:200px"><button class="sm" id="pwgo">Unlock</button></div>
+<p class="muted" id="gnote" role="status"></p></div></div>
+<div id="modal" role="dialog" aria-modal="true" aria-labelledby="mname"><div class="mbox"><div class="muted" id="mrank"></div><div class="mname" id="mname"></div><div class="mdesc" id="mdesc"></div>
+<div class="actions" style="justify-content:center"><button id="mAccept">Accept</button><button class="alt" id="mDiscard">Discard</button><button class="alt" id="mSkip" style="display:none">Skip all</button></div>
+<p class="muted" id="mmore" style="margin:12px 0 0"></p></div></div>
+<main inert>
+<h1>Garbage Patch</h1>
+<p class="sub">Each rank has a chance. Each subtier has a share inside its rank.</p>
+
+<p class="muted" id="diag"></p>
+<div id="ranks"></div>
+<div class="actions" id="ownerbar" style="margin-bottom:16px;display:none"><button class="alt" id="addRank">Add rank</button><button class="alt" id="defaults">Restore defaults</button><button id="pub">Save for everyone</button><span class="muted" id="pubmsg"></span></div>
+
+<section>
+<h2>Overall chances</h2>
+<div class="bar" id="bar"></div>
+<div class="muted" id="total"></div>
+</section>
+
+<section>
+<div class="actions">
+<button id="r1">Try once</button>
+<button id="r10" class="alt">Try 10 times</button>
+<button id="r100" class="alt">Try 100 times</button>
+</div>
+</section>
+
+<section>
+<h2>Outcomes of your last try</h2>
+<div class="results" id="results"><span class="muted">Nothing rolled yet.</span></div>
+</section>
+
+<section>
+<h2>Discarded items</h2>
+<div class="results" id="inv"></div>
+</section>
+
+<section>
+<h2>Results so far</h2>
+<div class="tw"><table><thead><tr><th>Rank / subtier</th><th>Set</th><th>Count</th><th>Actual</th></tr></thead><tbody id="stats"></tbody></table></div>
+<p class="muted">Small samples drift from the set chances. They converge as rolls grow.</p>
+<button class="alt" id="reset">Reset stats</button>
+</section>
+</main>
+<script id="cfg">var CONFIG=[{"name": "Common", "chance": 60, "color": "#6b7280", "subs": [{"name": "Trash Can", "w": 40, "desc": "Ornament"}, {"name": "Disgusting Tissue", "w": 40, "desc": "(Definitely do not try to eat this)"}, {"name": "Rat", "w": 20, "desc": "When eaten:\n-5 Health\n-3 Strength\n-1 Stamina\n+3 Energy"}]}, {"name": "Rare", "chance": 25, "color": "#2563eb", "subs": [{"name": "Mostly empty soda can", "w": 32, "desc": "When eaten:\n-3 Stamina\n-1 Health\n+4 Energy\n"}, {"name": "Soggy Half chewed burger", "w": 33, "desc": "When eaten:\n-3 Health\n-1 Stamina\n+3 Energy\n"}, {"name": "Rat", "w": 35, "desc": "When eaten:\n-5 Health\n-3 Strength\n-1 Stamina\n+3 Energy"}]}, {"name": "Epic", "chance": 11, "color": "#7c3aed", "subs": [{"name": "MegaMart voucher (15)", "w": 10, "desc": "Knocks off $20 off your next purchase at MegaMart"}, {"name": "MegaMart voucher (5)", "w": 25, "desc": "Knocks off $5 off your next purchase at MegaMart"}, {"name": "Rat", "w": 45, "desc": "When eaten:\n-5 Health\n-3 Strength\n-1 Stamina\n+3 Energy"}, {"name": "Half chewed burger + Mostly empty soda can", "w": 20, "desc": "When eaten:\n-4 Health\n-4 Stamina\n+7 Energy"}]}, {"name": "Legendary ", "chance": 3, "color": "#d6a00a", "subs": [{"name": "Crypto Wallet", "w": 3, "desc": "Claim up to 2000$ "}, {"name": "Worn Wallet", "w": 65, "desc": "Claim up to 120$"}, {"name": "Rat", "w": 25, "desc": "When eaten:\n-5 Health\n-3 Strength\n-1 Stamina\n+3 Energy"}, {"name": "Portal Key Piece", "w": 7, "desc": "Use 10 key pieces to activate a portal somewhere..."}]}, {"name": "Mythic", "chance": 1, "color": "#c01a30", "subs": [{"name": "E????????", "w": 0.5, "desc": "The Rarest item in the game. The sword Excalibur, wielded by the Legendary King Arthur himself."}, {"name": "C**** B*******", "w": 3.5, "desc": "Charm Bracelet. Most things seem to go well when you wear this."}, {"name": "R.A.T", "w": 6, "desc": "Experimental Rodent Annihilator-Tron. Make money from rats."}, {"name": "Rat", "w": 90, "desc": "When eaten:\n-5 Health\n-3 Strength\n-1 Stamina\n+3 Energy"}]}];</script>
+<script>
+var EDIT=false,dirty=false,queue=[],cur=null,disc={},held={},openD={};
+var COLORS=["#6b7280","#2563eb","#7c3aed","#d6a00a","#be185d","#0f766e","#c2410c"];
+function subs(){return[{name:"I",w:70},{name:"II",w:25},{name:"III",w:5}]}
+function defaults(){return[
+{name:"Common",chance:60,color:COLORS[0],subs:subs()},
+{name:"Rare",chance:25,color:COLORS[1],subs:subs()},
+{name:"Epic",chance:10,color:COLORS[2],subs:subs()},
+{name:"Legendary",chance:5,color:COLORS[3],subs:subs()}]}
+var ranks,counts,coins,rolls,KEY="rankRollerSetup";
+function load(){return Array.isArray(CONFIG)&&CONFIG.length?JSON.parse(JSON.stringify(CONFIG)):defaults()}
+function save(){dirty=true;showDirty()}
+function num(v){v=parseFloat(v);return isNaN(v)||v<0?0:v}
+function resetStats(msg){counts=ranks.map(function(r){return r.subs.map(function(){return 0})});rolls=0;disc={};held={};queue=[];cur=null;renderInv();
+document.getElementById("results").innerHTML='<span class="muted">'+(msg||"Nothing rolled yet.")+'</span>';refresh()}
+function rt(){return ranks.reduce(function(s,r){return s+r.chance},0)}
+function st(r){return r.subs.reduce(function(s,x){return s+x.w},0)}
+function pickW(arr,get,t){var x=Math.random()*t,a=0;for(var i=0;i<arr.length;i++){a+=get(arr[i]);if(x<a)return i}return arr.length-1}
+function pick(){var i=pickW(ranks,function(r){return r.chance},rt());var r=ranks[i];return[i,pickW(r.subs,function(s){return s.w},st(r))]}
+function ok(){if(rt()<=0){note("Set at least one rank chance above 0.");return false}
+for(var i=0;i<ranks.length;i++){if(ranks[i].chance>0&&st(ranks[i])<=0){note(ranks[i].name+" needs at least one subtier with a share above 0.");return false}}return true}
+function renderTally(box,tally,mode){
+var groups={},order=[];
+ranks.forEach(function(r,ri){r.subs.forEach(function(s,si){var key=s.name.trim().toLowerCase();
+var g=groups[key];if(!g){g=groups[key]={name:s.name,ranks:[],by:{},keys:[],total:0};order.push(key)}
+if(g.ranks.indexOf(ri)<0)g.ranks.push(ri);
+var k=ri+":"+si,n=tally[k]||0;g.keys.push(k);g.by[ri]=(g.by[ri]||0)+n;g.total+=n})});
+order.sort(function(a,b){return (groups[b].ranks.length>1)-(groups[a].ranks.length>1)});
+order.forEach(function(key){var g=groups[key];if(!g.total)return;
+var row=document.createElement("div");row.className="orow"+(mode==="d"?" dull":"");row.tabIndex=0;
+var c=document.createElement("span");c.className="chip";c.style.background=g.ranks.length>1?"#6b7280":ranks[g.ranks[0]].color;
+c.textContent=g.name+" x"+g.total;row.appendChild(c);
+if(g.ranks.length>1){row.appendChild(document.createTextNode("("));
+g.ranks.forEach(function(ri,i){if(i)row.appendChild(document.createTextNode(","));
+var m=document.createElement("span");m.className="num";m.style.background=ranks[ri].color;m.title=ranks[ri].name;m.textContent=g.by[ri];row.appendChild(m)});
+row.appendChild(document.createTextNode(")"))}
+var verb=mode==="h"?"Discard ":"Bring back ",acts=document.createElement("span");acts.className="acts";
+[[1,"1"],[10,"10"],[g.total,"all"]].forEach(function(o){
+if((o[1]==="10"&&g.total<=10)||(o[1]==="all"&&g.total<2))return;
+var bt=document.createElement("button");bt.className="alt sm";bt.textContent=verb+o[1];
+bt.onclick=function(){moveItems(g.keys,o[0],mode)};acts.appendChild(bt)});
+row.appendChild(acts);box.appendChild(row)})}
+function moveItems(keys,n,mode){var src=mode==="h"?held:disc,dst=mode==="h"?disc:held;
+for(var i=0;i<keys.length&&n>0;i++){var k=keys[i],t=Math.min(src[k]||0,n);if(t){src[k]-=t;dst[k]=(dst[k]||0)+t;n-=t}}
+renderHeld();renderInv()}
+function sum(o){return Object.keys(o).reduce(function(a,k){return a+o[k]},0)}
+function renderHeld(){var box=document.getElementById("results");box.innerHTML="";
+if(!sum(held)){box.innerHTML='<span class="muted">'+(cur||queue.length?'Items show up here as you accept, discard or skip them.':'Nothing here.')+'</span>';return}
+renderTally(box,held,"h")}
+function roll(n){
+if(!ok())return;
+var tally={};
+for(var i=0;i<n;i++){var p=pick();if(!counts[p[0]])counts[p[0]]=[];counts[p[0]][p[1]]=(counts[p[0]][p[1]]||0)+1;rolls++;queue.push(p)}
+held={};renderHeld();
+refresh();showNext()}
+function simulate(){if(!ok())return;for(var i=0;i<100;i++){var p=pick();counts[p[0]][p[1]]++;rolls++}
+document.getElementById("results").innerHTML='<span class="muted">Tried 100 times.</span>';refresh()}
+function pct(x){if(!(x>0))return "0%";if(x>=1)return (Math.round(x*100)/100)+"%";if(x<0.00001)return "<0.00001%";return Number(x.toFixed(Math.min(8,1-Math.floor(Math.log10(x)))))+"%"}
+function build(){
+var el=document.getElementById("ranks");el.innerHTML="";
+ranks.forEach(function(r,i){
+var d=document.createElement("div");d.className="rank";d.style.borderLeftColor=r.color;
+var h='<div class="head"><input type="text" class="rn" aria-label="Rank name" value="'+esc(r.name)+'" data-r="'+i+'" data-f="name">'+
+'<input type="number" min="0" step="any" aria-label="Rank chance" value="'+r.chance+'" data-r="'+i+'" data-f="chance">'+
+'<button class="alt sm" data-del="'+i+'">Remove rank</button></div>'+
+'<div class="muted" style="margin:0 0 4px 14px">Subtier name, share within rank, overall chance</div>';
+r.subs.forEach(function(s,j){
+h+='<div class="sr"><div class="nw"><input type="text" aria-label="Subtier name" value="'+esc(s.name)+'" data-r="'+i+'" data-s="'+j+'" data-f="name"><button class="dbtn'+(s.desc?' has':'')+'" aria-label="Edit what players see for this item" title="Edit what players see" data-desc="1">'+(s.desc?'\u270E':'+')+'</button></div>'+
+'<input type="number" min="0" step="any" aria-label="Subtier share" value="'+s.w+'" data-r="'+i+'" data-s="'+j+'" data-f="w">'+
+'<span class="muted" id="o'+i+'_'+j+'"></span><button class="alt sm x" aria-label="Remove subtier" data-r="'+i+'" data-ds="'+j+'">×</button></div>'+
+'<div class="dr" style="display:'+(openD[i+":"+j]?'':'none')+'"><textarea rows="2" maxlength="140" aria-label="Text shown when this item is pulled" placeholder="Text shown when this item is pulled (a couple of lines)" data-r="'+i+'" data-s="'+j+'" data-f="desc">'+esc(s.desc||"")+'</textarea></div>'});
+h+='<div style="padding-left:14px;margin-top:6px"><button class="alt sm" data-add="'+i+'">Add subtier</button></div>';
+d.innerHTML=h;el.appendChild(d)});
+applyMode();refresh()}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;")}
+function refresh(){
+var t=rt();
+ranks.forEach(function(r,i){var rs=st(r);r.subs.forEach(function(s,j){
+var e=document.getElementById("o"+i+"_"+j);if(e)e.textContent=pct(t>0&&rs>0?r.chance/t*s.w/rs*100:0)+" overall"})});
+document.getElementById("bar").innerHTML=ranks.map(function(r){return '<span style="background:'+r.color+';width:'+(t>0?r.chance/t*100:0)+'%" title="'+esc(r.name)+'"></span>'}).join("");
+document.getElementById("total").textContent="Rank chances total "+(Math.round(t*100)/100)+(Math.abs(t-100)<0.001?"":" (not 100, so they are scaled to fit). Subtier shares are scaled the same way.");
+var rows="";
+ranks.forEach(function(r,i){var ci=counts[i]||[],rc=ci.reduce(function(a,b){return a+b},0),rs=st(r);
+rows+='<tr class="rk"><td>'+esc(r.name)+'</td><td>'+pct(t>0?r.chance/t*100:0)+'</td><td>'+rc+'</td><td>'+pct(rolls?rc/rolls*100:0)+'</td></tr>';
+r.subs.forEach(function(s,j){rows+='<tr><td class="in">'+esc(s.name)+'</td><td>'+pct(t>0&&rs>0?r.chance/t*s.w/rs*100:0)+'</td><td>'+(ci[j]||0)+'</td><td>'+pct(rolls?(ci[j]||0)/rolls*100:0)+'</td></tr>'})});
+document.getElementById("stats").innerHTML=rows}
+document.getElementById("ranks").addEventListener("input",function(e){
+var t=e.target,ri=t.dataset.r;if(ri===undefined)return;var r=ranks[ri],f=t.dataset.f;
+if(t.dataset.s!==undefined){var s=r.subs[t.dataset.s];s[f]=f==="w"?num(t.value):t.value}
+else r[f]=f==="chance"?num(t.value):t.value;
+save();refresh()});
+document.getElementById("ranks").addEventListener("click",function(e){
+var b=e.target.closest("button");if(!b)return;var d=b.dataset;
+if(d.desc!==undefined){var dr=b.closest(".sr").nextElementSibling;var open=dr.style.display==="none";dr.style.display=open?"":"none";var inp=b.closest(".sr").querySelector("input[data-s]");openD[inp.dataset.r+":"+inp.dataset.s]=open;if(open)dr.querySelector("textarea").focus();return}
+if(d.add!==undefined){ranks[d.add].subs.push({name:"New",w:10})}
+else if(d.ds!==undefined){var r=ranks[d.r];if(r.subs.length<2){note("A rank needs at least one subtier.");return}r.subs.splice(d.ds,1);openD={}}
+else if(d.del!==undefined){if(ranks.length<2){note("Keep at least one rank.");return}ranks.splice(d.del,1);openD={}}
+else return;
+save();build();resetStats("Setup changed, so stats were reset.")});
+document.getElementById("addRank").onclick=function(){
+ranks.push({name:"New rank",chance:5,color:COLORS[ranks.length%COLORS.length],subs:subs()});save();build();resetStats("Setup changed, so stats were reset.")};
+document.getElementById("defaults").onclick=function(){ranks=defaults();save();build();resetStats()};
+document.getElementById("r1").onclick=function(){roll(1)};
+document.getElementById("r10").onclick=function(){roll(10)};
+document.getElementById("r100").onclick=function(){roll(100)};
+document.getElementById("reset").onclick=function(){resetStats()};
+function applyMode(){document.getElementById("ownerbar").style.display=EDIT?"":"none";
+if(!EDIT){var r=document.getElementById("ranks");r.querySelectorAll("input,textarea").forEach(function(i){i.disabled=true});r.querySelectorAll(".dr").forEach(function(x){x.style.display="none"});r.querySelectorAll("button").forEach(function(b){b.style.display="none"})}}
+function showDirty(){var m=document.getElementById("pubmsg");if(m)m.textContent=dirty?"Unsaved changes":""}
+ranks=load();resetStats();build();
+var PASS_HASH="";
+async function sha(t){var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,"0")}).join("")}
+function note(t){var d=document.getElementById("diag");if(d)d.textContent=t}
+function setMsg(t){document.getElementById("pubmsg").textContent=t}
+var store=null;
+function label(p){return ranks[p[0]].name+": "+ranks[p[0]].subs[p[1]].name}
+function showNext(){if(cur||!queue.length)return;cur=queue.shift();var r=ranks[cur[0]];
+document.getElementById("modal").style.setProperty("--mc",r.color);
+document.getElementById("mrank").textContent=r.name;
+document.getElementById("mname").textContent=r.subs[cur[1]].name;var md=document.getElementById("mdesc");md.textContent=r.subs[cur[1]].desc||"";md.style.display=r.subs[cur[1]].desc?"":"none";
+document.getElementById("mmore").textContent=queue.length?queue.length+" more to come":"";
+var sk=document.getElementById("mSkip");sk.style.display=queue.length?"":"none";sk.textContent="Skip all ("+(queue.length+1)+")";
+document.getElementById("modal").style.display="flex";document.querySelector("main").inert=true;document.getElementById("mAccept").focus()}
+function closeItem(act){var k=cur[0]+":"+cur[1];if(act==="d")disc[k]=(disc[k]||0)+1;else{held[k]=(held[k]||0)+1;if(act==="s"){queue.forEach(function(p){var q=p[0]+":"+p[1];held[q]=(held[q]||0)+1});queue=[]}}renderInv();renderHeld();
+cur=null;document.getElementById("modal").style.display="none";document.querySelector("main").inert=false;showNext()}
+function renderInv(){var el=document.getElementById("inv");if(!el)return;el.innerHTML="";
+if(!sum(disc)){el.innerHTML='<span class="muted">Nothing discarded yet.</span>';return}
+renderTally(el,disc,"d")}
+document.getElementById("mAccept").onclick=function(){closeItem("a")};
+document.getElementById("mDiscard").onclick=function(){closeItem("d")};
+document.getElementById("mSkip").onclick=function(){closeItem("s")};
+function gnote(t){document.getElementById("gnote").textContent=t}
+function openGate(){document.getElementById("gate").style.display="none";document.querySelector("main").inert=false}
+document.getElementById("gView").onclick=openGate;
+document.getElementById("gEdit").onclick=function(){document.getElementById("gpw").style.display="flex";document.getElementById("pwin").focus()};
+async function tryUnlock(){var v=document.getElementById("pwin").value;
+try{if(await sha(v.trim().toLowerCase())!==PASS_HASH){gnote("Wrong passcode");return}}catch(e){gnote("Could not check the passcode in this browser");return}
+EDIT=true;build();openGate()}
+document.getElementById("pwgo").onclick=tryUnlock;
+document.getElementById("pwin").addEventListener("keydown",function(e){if(e.key==="Enter")tryUnlock()});
+document.getElementById("pub").onclick=async function(){
+if(!store){setMsg("Saving for everyone isn't available here. Edits stay in this tab.");return}
+try{await store.set({json:JSON.stringify(ranks)});dirty=false;setMsg("Saved for everyone")}catch(e){setMsg("Could not save: "+(e&&e.code||"error"))}};
+(async function(){try{if(!window.claude)return;var db=await claude.use("db");if(!db)return;
+store=db.doc("config/main");
+store.onSnapshot(function(sn){if(EDIT&&dirty)return;var d=sn.exists&&sn.data();
+if(d&&d.json){try{var r=JSON.parse(d.json);if(Array.isArray(r)&&r.length&&JSON.stringify(r)!==JSON.stringify(ranks)){ranks=r;build();resetStats()}}catch(e){}}},function(){})}catch(e){}})();
+openGate();
+</script>
+</body>
+</html>
